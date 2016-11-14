@@ -1,0 +1,64 @@
+# System seting
+install
+text
+
+# System language
+lang en_US.UTF-8
+langsupport --default en_US.UTF-8 en_US.UTF-8
+key --skip
+
+# System keyboard
+keyboard us
+
+# Network information
+network --onboot yes --device eth0 --bootproto dhcp --noipv6
+
+# Root password
+rootpw  --iscrypted $1$FuR7rEdn$sdez1vIafdr9XtczNxd9F1
+authconfig --enableshadow --passalgo=sha512
+
+# Firewall configuation
+firewall --disabled
+
+# SELinux configuration
+selinux --disabled
+
+# System timezone
+timezone  Asia/Shanghai
+
+# bootloader
+bootloader --location=mbr --append="crashkernel=auto rhgb quiet"
+
+# Clear the master Boot Record
+zerombr yes
+clearpart --all
+
+# the Setup Agent is not started the first time the system boots
+firstboot --disable
+
+# power off after installation
+poweroff
+
+# disk partitioning
+part / --fstype ext3 --size=1024 --grow
+
+%packages --nobase
+acpid
+dnsmasq
+openssh-clients
+iptables
+
+%post
+## configure ssh
+sed -i 's/\#UseDNS yes/UseDNS no/' /etc/ssh/sshd_config
+sed -i "s/set timeout=5/set timeout=0/" /boot/grub2/grub.cfg
+
+## cofnigure boot menu
+sed -i 's/ rhgb//g' /boot/grub/grub.conf
+sed -i 's/ quiet//g' /boot/grub/grub.conf
+sed -i -e 's/\(^SELINUX=\)enforcing$/\1disabled/' /etc/selinux/config
+sed -i '/^HWADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0
+echo -n > /etc/udev/rules.d/70-persistent-net.rules
+echo -n > /lib/udev/rules.d/75-persistent-net-generator.rules
+
+%end
